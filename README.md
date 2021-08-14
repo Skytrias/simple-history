@@ -13,7 +13,9 @@ package main
 
 import history "shared:simple-history"
 
-_test_simple :: proc() {
+main :: proc() {
+	using history;
+	
 	history: History;
 	init(&history);
 	defer destroy(&history);
