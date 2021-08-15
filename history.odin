@@ -29,7 +29,7 @@ HistoryChange :: struct {
 // clear temporary assigned pushes
 clear_temp :: proc(a: ^History) {
 	for ptr, arr in a.temp {
-		delete(arr);
+		delete(arr, a.allocator);
 	}
 
 	clear(&a.temp);
@@ -100,20 +100,19 @@ commit :: proc(a: ^History, name: string) {
 	
 	for ptr, bytes in a.temp {
 		if mem.compare(bytes[:], mem.byte_slice(ptr, len(bytes))) != 0 {
-			append(&batch.changes, HistoryChange { bytes, ptr });
+			append(&batch.changes, HistoryChange { mem.clone_slice(bytes, a.allocator), ptr });
 			any_change = true;
-		} else {
-			delete(bytes);
-		}
+		} 
 	}
 	
 	if any_change {
 		_array_free(a, &a.redo);
 		batch.name = name;
+		// fmt.println(batch.name);
 		container.array_push_back(&a.undo, batch);
 	}
 	
-	clear(&a.temp);
+	clear_temp(a);
 }
 
 undo :: #force_inline proc(a: ^History) -> bool {
@@ -135,7 +134,6 @@ _undo_redo :: proc(history: ^History, a, b: ^container.Array(HistoryBatch)) -> b
 	
 	for i := len(batch.changes) - 1; i >= 0; i -= 1 {
 		change := batch.changes[i];
-		
 		mem.copy(&history.flip[0], change.ptr, len(change.bytes));
 		mem.copy(change.ptr, &change.bytes[0], len(change.bytes));
 		mem.copy(&change.bytes[0], &history.flip[0], len(change.bytes));
