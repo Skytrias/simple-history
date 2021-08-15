@@ -11,9 +11,11 @@ Pretty much [this by rxi](https://rxi.github.io/a_simple_undo_system.html)
 ```go 
 package main
 
-import history "shared:simple-history"
+import hist "shared:simple-history"
 
-_test_simple :: proc() {
+main :: proc() {
+	using hist;
+	
 	history: History;
 	init(&history);
 	defer destroy(&history);
